@@ -18,6 +18,16 @@ var (
 	store imagestore.ImageStore
 )
 
+type request struct {
+	FileName    string `json:"file_name"`
+	Description string `json:"description"`
+	Data        []byte `json:"data"`
+}
+
+type response struct {
+	Data handlers.HttpImageData `json:"data"`
+}
+
 func init() {
 	store = inmem_imagestore.New()
 }
