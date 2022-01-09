@@ -11,10 +11,15 @@ import (
 )
 
 var (
-	msgOnlyGetSupported = []byte("only GET method allowed")
+	msgOnlyGetSupported = "only GET method allowed"
 
 	store imagestore.ImageStore
 )
+
+type response struct {
+	Size int                      `json:"size"`
+	Data []handlers.HttpImageData `json:"data"`
+}
 
 func init() {
 	store = inmem_imagestore.New()
@@ -26,7 +31,7 @@ func GetHandler() http.HandlerFunc {
 		// validate method
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
-			w.Write(msgOnlyGetSupported)
+			w.Write([]byte(msgOnlyGetSupported))
 			return
 		}
 
@@ -57,14 +62,6 @@ func GetHandler() http.HandlerFunc {
 			log.Printf("json encode of response failed: %s\n", err)
 		}
 	}
-}
-
-//type request struct {
-//}
-
-type response struct {
-	Size int                      `json:"size"`
-	Data []handlers.HttpImageData `json:"data"`
 }
 
 func getHttpImageDataFrom(img *entities.Image) *handlers.HttpImageData {
