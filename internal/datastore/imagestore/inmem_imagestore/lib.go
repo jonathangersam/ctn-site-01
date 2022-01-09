@@ -2,29 +2,35 @@ package inmem_imagestore
 
 import (
 	"ctn01/internal/datastore/imagestore"
-	"ctn01/internal/schema"
+	"ctn01/internal/entities"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type Store struct {
-	localStorage map[int]*schema.Image
+	localStorage map[string]*entities.Image
 	muTakeImage  sync.Mutex // protects Take function
 }
 
-func NewImageStore() imagestore.ImageStore {
-	store := Store{}
+func New() imagestore.ImageStore {
+	store := Store{
+		localStorage: map[string]*entities.Image{},
+	}
 
 	// setup in-memory data store, to quickly get up to speed
 
 	// populate init storage with dummy
-	store.localStorage[1] = &schema.Image{
-		Id:          1,
+	newId := uuid.New().String()
+	store.localStorage[newId] = &entities.Image{
+		Id:          newId,
 		Description: "first image",
 		Available:   true,
 	}
 
-	store.localStorage[2] = &schema.Image{
-		Id:          2,
+	newId = uuid.New().String()
+	store.localStorage[newId] = &entities.Image{
+		Id:          newId,
 		Description: "second image",
 		Available:   true,
 	}
@@ -32,7 +38,7 @@ func NewImageStore() imagestore.ImageStore {
 	return &store
 }
 
-func (s *Store) GetImageByID(id int) (*schema.Image, error) {
+func (s *Store) GetImageByID(id string) (*entities.Image, error) {
 	image, found := s.localStorage[id]
 	if !found {
 		return nil, imagestore.ErrorImageNotFound
@@ -41,11 +47,11 @@ func (s *Store) GetImageByID(id int) (*schema.Image, error) {
 	return image, nil
 }
 
-func (s *Store) GetImages(fromId, toId, afterId, size int) ([]*schema.Image, error) {
-	var matches []*schema.Image
+func (s *Store) GetImages(fromId, toId, afterId string, size int) ([]*entities.Image, error) {
+	var matches []*entities.Image
 
 	// helper fn
-	idWithinRange := func(id int) bool {
+	idWithinRange := func(id string) bool {
 		return id >= fromId && id > afterId && id <= toId
 	}
 
@@ -60,18 +66,19 @@ func (s *Store) GetImages(fromId, toId, afterId, size int) ([]*schema.Image, err
 	return matches, nil
 }
 
-func (s *Store) InsertImage(image schema.Image) error {
+func (s *Store) InsertImage(image entities.Image) (*entities.Image, error) {
 	// prevent inserting of new image
+	image.Id = uuid.New().String() // TODO: use something else
 	_, imageExists := s.localStorage[image.Id]
 	if imageExists {
-		return imagestore.ErrorImageExists
+		return nil, imagestore.ErrorImageExists
 	}
 
 	s.localStorage[image.Id] = &image
-	return nil
+	return &image, nil
 }
 
-func (s *Store) TakeImageById(id int) error {
+func (s *Store) TakeImageById(id string) error {
 	// if non existing, error
 	image, imageExists := s.localStorage[id]
 	if !imageExists {
