@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ctn01/internal/handlers"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,6 +18,8 @@ func main() {
 	fmt.Println("Application starting...")
 
 	http.HandleFunc("/", simpleGreet())
+	http.HandleFunc("/image", handlers.ImageHandler())
+	http.HandleFunc("/images", handlers.ImagesHandler())
 
 	fmt.Println("Listening on port 8080")
 
