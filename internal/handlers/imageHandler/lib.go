@@ -31,6 +31,8 @@ func GetHandler() http.HandlerFunc {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
+
 		// get request
 		req, err := parseRequest(r)
 		if err != nil {
