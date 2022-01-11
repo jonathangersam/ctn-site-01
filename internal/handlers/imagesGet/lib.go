@@ -37,7 +37,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// reply
 	httpImageData := make([]handlers.HttpImageData, len(images))
 	for i, image := range images {
-		httpImageData[i] = *getHttpImageDataFrom(image)
+		httpImageData[i] = getHttpImageDataFrom(image)
 		httpImageData[i].Code = http.StatusOK
 	}
 
@@ -52,8 +52,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getHttpImageDataFrom(img *entities.Image) *handlers.HttpImageData {
-	return &handlers.HttpImageData{
+func getHttpImageDataFrom(img entities.Image) handlers.HttpImageData {
+	return handlers.HttpImageData{
 		Id:          img.Id,
 		Description: img.Description,
 		Available:   img.Available,

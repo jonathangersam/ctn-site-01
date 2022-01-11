@@ -29,13 +29,10 @@ func init() {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	// get request
 	req, err := parseRequest(r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		handlers.WriteGenericResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -44,44 +41,43 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// process request
 	newImg, err := saveImage(req)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		handlers.WriteGenericResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// reply
+	status := http.StatusOK
 	res := response{
 		Data: handlers.HttpImageData{
 			Id:          newImg.Id,
 			Description: newImg.Description,
 			Available:   newImg.Available,
-			Code:        http.StatusOK,
+			Code:        status,
 		},
 	}
 
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		log.Printf("json response writing failed: %s\n", err)
-	}
+	handlers.WriteResponse(w, status, res)
 }
 
-func parseRequest(r *http.Request) (*request, error) {
+func parseRequest(r *http.Request) (request, error) {
 	defer r.Body.Close()
 
 	var req request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return request{}, err
 	}
 
-	return &req, nil
+	return req, nil
 }
 
-func saveImage(req *request) (*entities.Image, error) {
+func saveImage(req request) (entities.Image, error) {
 	var img = entities.Image{
 		Description: req.Description,
 		Available:   true,
-		Blob:        nil,
+		Blob:        req.Data,
 	}
 
-	return store.InsertImage(img) // this fn will auto-generate unique Id
+	newImg, err := store.InsertImage(img) // this fn will auto-generate unique Id
+
+	return newImg, err
 }

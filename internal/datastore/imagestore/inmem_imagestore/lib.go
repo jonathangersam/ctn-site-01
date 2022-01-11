@@ -19,14 +19,14 @@ const (
 )
 
 var (
-	localStorage = map[uint64]*entities.Image{}
+	localStorage = map[uint64]entities.Image{}
 	muStore      = sync.Mutex{} // protects Take function
 )
 
 func init() {
 	// populate storage with dummy
 	uid := uuid.New().String()
-	localStorage[1] = &entities.Image{
+	localStorage[1] = entities.Image{
 		Id:          1,
 		UID:         uid,
 		Description: "first image",
@@ -34,11 +34,18 @@ func init() {
 	}
 
 	uid = uuid.New().String()
-	localStorage[2] = &entities.Image{
+	localStorage[2] = entities.Image{
 		Id:          2,
 		Description: "second image",
 		Available:   true,
 	}
+
+	uid = uuid.New().String()
+	img := entities.ImageSmileyFacePng
+	img.Id = 3
+	img.UID = uid
+	img.Available = true
+	localStorage[3] = img
 }
 
 type store struct{}
@@ -48,10 +55,10 @@ func Connect() (imagestore.ImageStore, error) {
 	return &store{}, nil
 }
 
-func (s *store) GetImageByID(id uint64) (*entities.Image, error) {
+func (s *store) GetImageByID(id uint64) (entities.Image, error) {
 	image, found := localStorage[id]
 	if !found {
-		return nil, imagestore.ErrorImageNotFound
+		return entities.Image{}, imagestore.ErrorImageNotFound
 	}
 
 	return image, nil
@@ -65,8 +72,8 @@ func (s *store) GetImageByID(id uint64) (*entities.Image, error) {
 // Images with ID greater than afterId argument will be returned (exclusive).
 //
 // If size == -1, no limit on number of values returned
-func (s *store) GetImages(fromId, toId, afterId uint64, size int) ([]*entities.Image, error) {
-	var matches []*entities.Image
+func (s *store) GetImages(fromId, toId, afterId uint64, size int) ([]entities.Image, error) {
+	var matches []entities.Image
 
 	// helper fn
 	upperLimit := toId
@@ -104,7 +111,7 @@ func getMaxId() uint64 {
 	return keys[len(keys)-1]
 }
 
-func (s *store) InsertImage(image entities.Image) (*entities.Image, error) {
+func (s *store) InsertImage(image entities.Image) (entities.Image, error) {
 	// prevent inserting of new image
 	muStore.Lock()
 
@@ -116,26 +123,29 @@ func (s *store) InsertImage(image entities.Image) (*entities.Image, error) {
 	//	return nil, imagestore.ErrorImageExists
 	//}
 
-	localStorage[image.Id] = &image
+	localStorage[image.Id] = image
 	muStore.Unlock()
-	return &image, nil
+	return image, nil
 }
 
-func (s *store) TakeImageById(id uint64) error {
-	// if non existing, error
+func (s *store) TakeImageById(id uint64) (entities.Image, error) {
+	// return error if not found
+	muStore.Lock()
 	image, imageExists := localStorage[id]
 	if !imageExists {
-		return imagestore.ErrorImageNotFound
+		muStore.Unlock()
+		return entities.Image{}, imagestore.ErrorImageNotFound
 	}
 
-	muStore.Lock()
+	// return error if unavailable
 	if !image.Available {
-		muStore.Unlock() // TODO revisit for updates
-		return imagestore.ErrorImageAlreadyTaken
+		muStore.Unlock()
+		return entities.Image{}, imagestore.ErrorImageAlreadyTaken
 	}
 
 	image.Available = false
+	localStorage[id] = image
 	muStore.Unlock()
 
-	return nil
+	return image, nil
 }

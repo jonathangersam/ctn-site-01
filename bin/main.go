@@ -2,6 +2,7 @@ package main
 
 import (
 	"ctn01/internal/handlers/healthGet"
+	"ctn01/internal/handlers/homeGet"
 	"ctn01/internal/handlers/imageGet"
 	"ctn01/internal/handlers/imagePatch"
 	"ctn01/internal/handlers/imagePost"
@@ -30,6 +31,7 @@ func main() {
 	router.HandleFunc("/image/{id:[0-9]+}", imagePatch.Handler).Methods("PATCH")
 	router.HandleFunc("/image", imagePost.Handler).Methods("POST")
 	router.HandleFunc("/images", imagesGet.Handler).Methods("GET")
+	router.HandleFunc("/home", homeGet.Handler())
 	router.HandleFunc("/", simpleGreet())
 
 	fmt.Println("Listening on port 8080")

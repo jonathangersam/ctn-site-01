@@ -6,3 +6,12 @@ type HttpImageData struct {
 	Available   bool   `json:"available"`
 	Code        int    `json:"code"`
 }
+
+type GenericResponse struct {
+	Data GenericErrorData `json:"data"`
+}
+
+type GenericErrorData struct {
+	Code        int    `json:"code"`
+	Description string `json:"description"`
+}
