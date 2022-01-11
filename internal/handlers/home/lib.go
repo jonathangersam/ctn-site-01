@@ -1,4 +1,4 @@
-package homeGet
+package home
 
 import (
 	"html/template"

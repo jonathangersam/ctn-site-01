@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Caton Assignment</title>
+</head>
+<body>
+
+<h1>Caton Assignment</h1>
+<p>by {{ .Name }}</p>
+
+<br>
+
+<div>
+    <p>FILENAME: {{ .Image.Filename }}</p>
+    <p>DESCRIPTION: {{ .Image.Description }}</p>
+    <p>IS AVAILABLE: {{ .Image.Available }}</p>
+    <img src="data:image/png;base64, {{ .ImageContent }}" alt="Red dot" />
+</div>
+
+
+</body>
+</html>

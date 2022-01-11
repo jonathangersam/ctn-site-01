@@ -1,4 +1,4 @@
-package healthGet
+package health
 
 import (
 	"ctn01/internal/handlers"

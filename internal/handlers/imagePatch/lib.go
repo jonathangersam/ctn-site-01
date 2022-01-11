@@ -5,6 +5,7 @@ import (
 	"ctn01/internal/datastore/imagestore/inmem_imagestore"
 	"ctn01/internal/handlers"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -31,6 +32,8 @@ func init() {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	//log.Printf("r.Host: %s, r.URL.Path: %s, r.RequestURI: %s\n", r.Host, r.URL.Path, r.RequestURI)
+
 	// get input
 	id := handlers.GetMuxVar(r, "id")
 
@@ -72,7 +75,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				Available:   img.Available,
 				Code:        status,
 			},
-			File: "TBD", // TODO fill this
+			File: getImageViewURI(r),
 		},
 	}
 
@@ -83,4 +86,8 @@ func parseRequest(r *http.Request) (request, error) {
 	var req request
 	err := json.NewDecoder(r.Body).Decode(&req)
 	return req, err
+}
+
+func getImageViewURI(r *http.Request) string {
+	return fmt.Sprintf("%s%s/view", r.Host, r.RequestURI)
 }
