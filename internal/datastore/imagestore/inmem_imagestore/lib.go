@@ -26,12 +26,11 @@ var (
 func init() {
 	// populate storage with dummy
 	uid := uuid.New().String()
-	localStorage[1] = entities.Image{
-		Id:          1,
-		UID:         uid,
-		Description: "first image",
-		Available:   true,
-	}
+	img := entities.ImageSmileyFacePng
+	img.Id = 1
+	img.UID = uid
+	img.Available = true
+	localStorage[1] = img
 
 	uid = uuid.New().String()
 	localStorage[2] = entities.Image{
@@ -41,11 +40,12 @@ func init() {
 	}
 
 	uid = uuid.New().String()
-	img := entities.ImageSmileyFacePng
-	img.Id = 3
-	img.UID = uid
-	img.Available = true
-	localStorage[3] = img
+	localStorage[3] = entities.Image{
+		Id:          3,
+		UID:         uid,
+		Description: "first image",
+		Available:   true,
+	}
 }
 
 type store struct{}

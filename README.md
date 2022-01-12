@@ -4,6 +4,14 @@ Assignment solution.
 
 Author: Jonathan Gersam S. Lopez
 
+## Running in Local machine
+1. From root directory, execute:
+
+```
+    go run bin/main.go
+```
+2. Use web browser to visit `localhost:8080/`
+
 ## API Endpoints
 
 GET /image/{id}
@@ -45,7 +53,7 @@ GET /home
 
 GET /image/{id}/view
 * displays image data and render of the image itself
-* sample: localhost:8080/image/3/view
+* sample: localhost:8080/image/1/view
 
 GET /
 * defaults to home page
