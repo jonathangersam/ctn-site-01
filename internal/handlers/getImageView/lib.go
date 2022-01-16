@@ -1,4 +1,4 @@
-package imageViewGet
+package getImageView
 
 import (
 	"ctn01/internal/datastore/imagestore"

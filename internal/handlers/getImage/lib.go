@@ -1,8 +1,8 @@
-package imageGet
+package getImage
 
 import (
-	"ctn01/internal/datastore/imagestore"
-	"ctn01/internal/datastore/imagestore/inmem_imagestore"
+	store "ctn01/internal/datastore/imagestore2"
+	"ctn01/internal/entities"
 	"ctn01/internal/handlers"
 	"net/http"
 	"strconv"
@@ -12,16 +12,14 @@ const (
 	errorIdNotNumeric = "search id must be numeric"
 )
 
-var (
-	store imagestore.ImageStore
-)
+var getImageByID func(uint64) (entities.Image, error)
 
 type response struct {
 	Data handlers.HttpImageData `json:"data"`
 }
 
 func init() {
-	store, _ = inmem_imagestore.Connect()
+	getImageByID = store.GetImageByID
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +35,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	uint64SearchId := uint64(intSearchId)
 
 	// fetch the image
-	img, err := store.GetImageByID(uint64SearchId)
+	//img, err := store.GetImageByID(uint64SearchId)
+	img, err := getImageByID(uint64SearchId)
 	if err != nil {
 		handlers.WriteGenericResponse(w, http.StatusInternalServerError, err.Error())
 		return

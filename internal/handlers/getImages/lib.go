@@ -1,8 +1,7 @@
-package imagesGet
+package getImages
 
 import (
-	"ctn01/internal/datastore/imagestore"
-	"ctn01/internal/datastore/imagestore/inmem_imagestore"
+	store "ctn01/internal/datastore/imagestore2"
 	"ctn01/internal/entities"
 	"ctn01/internal/handlers"
 	"encoding/json"
@@ -10,17 +9,9 @@ import (
 	"net/http"
 )
 
-var (
-	store imagestore.ImageStore
-)
-
 type response struct {
 	Size int                      `json:"size"`
 	Data []handlers.HttpImageData `json:"data"`
-}
-
-func init() {
-	store, _ = inmem_imagestore.Connect()
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {

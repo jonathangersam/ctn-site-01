@@ -18,5 +18,6 @@ type Image struct {
 	Filename    string
 	Description string
 	Available   bool
+	Filetype    string
 	Blob        []byte // raw image data
 }

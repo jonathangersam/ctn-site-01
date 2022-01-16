@@ -1,8 +1,7 @@
-package imagePost
+package postImage
 
 import (
-	"ctn01/internal/datastore/imagestore"
-	"ctn01/internal/datastore/imagestore/inmem_imagestore"
+	store "ctn01/internal/datastore/imagestore2"
 	"ctn01/internal/entities"
 	"ctn01/internal/handlers"
 	"encoding/json"
@@ -11,7 +10,8 @@ import (
 )
 
 var (
-	store imagestore.ImageStore
+	insertImage  func(entities.Image) (int, error)
+	getImageById func(uint64) (entities.Image, error)
 )
 
 type request struct {
@@ -25,7 +25,8 @@ type response struct {
 }
 
 func init() {
-	store, _ = inmem_imagestore.Connect()
+	insertImage = store.InsertImage
+	getImageById = store.GetImageByID
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +78,13 @@ func saveImage(req request) (entities.Image, error) {
 		Blob:        req.Data,
 	}
 
-	newImg, err := store.InsertImage(img) // this fn will auto-generate unique Id
+	id, err := store.InsertImage(img) // this fn will auto-generate unique Id
+	if err != nil {
+		return entities.Image{}, err
+	}
 
-	return newImg, err
+	log.Printf("last inserted row was: %d\n", id)
+
+	uint64Id := uint64(id)
+	return getImageById(uint64Id)
 }

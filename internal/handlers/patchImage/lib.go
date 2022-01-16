@@ -1,4 +1,4 @@
-package imagePatch
+package patchImage
 
 import (
 	"ctn01/internal/datastore/imagestore"
