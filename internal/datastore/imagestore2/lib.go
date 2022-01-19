@@ -5,14 +5,24 @@ import (
 	"database/sql"
 	"errors"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 	"os"
+	"sync"
+)
+
+const (
+	imageAvailable   = 1
+	imageUnavailable = 0
 )
 
 var (
-	ErrorNoRowsMatch = errors.New("no rows matched")
+	ErrorNotFound         = errors.New("image doesn't exist")
+	ErrorImageUnavailable = errors.New("image already taken")
+	ErrorNoRowsMatch      = errors.New("no rows matched")
 
-	db         *sql.DB // use singleton global var as it fits the complexity of the application.
-	connString string
+	db          *sql.DB // use singleton global var as it fits the complexity of the application.
+	connString  string
+	takeImageMu sync.Mutex
 )
 
 func init() {
@@ -37,17 +47,17 @@ func Connect() {
 func GetImageByID(id uint64) (entities.Image, error) {
 	rows, err := db.Query(`SELECT id, filename, description, available, filetype, image_data FROM images1 WHERE id = ? LIMIT 1`, id)
 	if err != nil {
-		return entities.Image{}, err
+		return emptyImage(), err
 	}
 	defer rows.Close()
 
 	result, err := scanRows(rows)
 	if err != nil {
-		return entities.Image{}, err
+		return emptyImage(), err
 	}
 
 	if len(result) == 0 {
-		return entities.Image{}, ErrorNoRowsMatch
+		return emptyImage(), ErrorNotFound
 	}
 
 	return result[0], nil
@@ -75,12 +85,10 @@ WHERE id >= ? AND id > ? AND id <= ? LIMIT ?`, fromId, afterId, toId, size)
 }
 
 func InsertImage(img entities.Image) (int, error) {
-	isAvailable := 1
-
 	// do insert
 	rows, err := db.Query(`
 INSERT INTO images1 (filename, description, available, filetype, image_data)
-VALUES (?, ?, ?, ?, ?) RETURNING id`, img.Filename, img.Description, isAvailable, img.Filetype, img.Blob)
+VALUES (?, ?, ?, ?, ?) RETURNING id`, img.Filename, img.Description, imageAvailable, img.Filetype, img.Blob)
 	if err != nil {
 		return 0, err
 	}
@@ -100,7 +108,46 @@ VALUES (?, ?, ?, ?, ?) RETURNING id`, img.Filename, img.Description, isAvailable
 }
 
 func TakeImageById(id uint64) (entities.Image, error) {
-	return entities.Image{}, nil
+	// if images not found, error
+	img, err := GetImageByID(id)
+	if err != nil {
+		return emptyImage(), err
+	}
+
+	// if image is unavailable, error
+	if !img.Available {
+		return img, ErrorImageUnavailable
+	}
+
+	// mark image as unavailable (already taken)
+	takeImageMu.Lock()
+	err = doTakeImage(id)
+	takeImageMu.Unlock()
+	if err != nil {
+		log.Printf("doTakeImage(%d) returned error: %s\n", id, err)
+		return emptyImage(), ErrorImageUnavailable
+	}
+
+	img.Available = false
+	return img, nil
+}
+
+func doTakeImage(id uint64) error {
+	// mark image as unavailable (already taken)
+	resp, err := db.Exec(`
+UPDATE images1 SET available = ? WHERE id = ? AND available = ?
+`, imageUnavailable, id, imageAvailable)
+	if err != nil {
+		return err
+	}
+
+	// if error / no rows matched, return error
+	count, err := resp.RowsAffected()
+	if err != nil || count == 0 {
+		return ErrorImageUnavailable
+	}
+
+	return nil
 }
 
 func Close() error {
@@ -115,7 +162,7 @@ func scanRows(rows *sql.Rows) ([]entities.Image, error) {
 		if err := rows.Scan(&img.Id, &img.Filename, &img.Description, &intAvailable, &img.Filetype, &img.Blob); err != nil {
 			return nil, err
 		}
-		img.Available = intAvailable == 1
+		img.Available = intAvailable == imageAvailable
 
 		result = append(result, img)
 	}
@@ -125,4 +172,9 @@ func scanRows(rows *sql.Rows) ([]entities.Image, error) {
 	}
 
 	return result, nil
+}
+
+// emptyImage is a convenience function returning zero value of image struct
+func emptyImage() entities.Image {
+	return entities.Image{}
 }

@@ -1,8 +1,9 @@
 package patchImage
 
 import (
-	"ctn01/internal/datastore/imagestore"
-	"ctn01/internal/datastore/imagestore/inmem_imagestore"
+	store "ctn01/internal/datastore/imagestore2"
+
+	"ctn01/internal/entities"
 	"ctn01/internal/handlers"
 	"encoding/json"
 	"fmt"
@@ -11,7 +12,8 @@ import (
 )
 
 var (
-	store imagestore.ImageStore
+	//store imagestore.ImageStore
+	takeImageByID func(uint64) (entities.Image, error)
 )
 
 type request struct {
@@ -28,7 +30,8 @@ type httpImageDataWithFile struct {
 }
 
 func init() {
-	store, _ = inmem_imagestore.Connect()
+	//store, _ = inmem_imagestore.Connect()
+	takeImageByID = store.TakeImageById
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +62,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// take image in DB
-	img, err := store.TakeImageById(uint64Id)
+	//img, err := store.TakeImageById(uint64Id)
+	img, err := takeImageByID(uint64Id)
 	if err != nil {
 		handlers.WriteGenericResponse(w, http.StatusInternalServerError, err.Error())
 		return
